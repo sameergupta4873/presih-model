@@ -1,15 +1,14 @@
 # FASTAPI REQ
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-
-# CUSTOM REQ
-# TODO: stuff -> change to actual name of module which reads from database
-import stuff
+import shutil
+# import stuff  # Replace with actual module name if necessary
 from inference_sdk import InferenceHTTPClient
 import uvicorn
+import os
 
 # Initialize database collections
-img_collection = stuff.db["images"]
+# img_collection = stuff.db["images"]  # Update if needed
 
 # init APP
 app = FastAPI()
@@ -32,20 +31,19 @@ CLIENT = InferenceHTTPClient(
     api_key="XHaFXRyw5dZyr6rSletk"
 )
 
-
-@app.get("/check_forgery")
-async def check_forgery(image_id: str):
-    # TODO: change as per database schema
-    image_data = img_collection.find_one({"_id": image_id})
- 
-    if not image_data:
-        raise HTTPException(status_code=404, detail="Image not found")
-
-    # Get the image URL (assuming it's always present)
-    image_url = image_data["image_url"]
+@app.post("/check_forgery")
+async def check_forgery(image: UploadFile = File(...)):
+    # Save the uploaded image to a temporary location
+    temp_image_path = f"temp_{image.filename}"
+    with open(temp_image_path, "wb") as temp_image_file:
+        shutil.copyfileobj(image.file, temp_image_file)
 
     # Perform forgery detection
-    result = CLIENT.infer(image_url, model_id="document-forgery-detection/2")
+    try:
+        result = CLIENT.infer(temp_image_path, model_id="document-forgery-detection/2")
+    finally:
+        # Clean up the temporary file
+        os.remove(temp_image_path)
 
     # Determine if there is forgery
     if not result['predictions']:
@@ -53,7 +51,6 @@ async def check_forgery(image_id: str):
     else:
         confidence = result['predictions'][0]['confidence']
         return {"response": "Forgery detected", "confidence": confidence}
-    
-if __name__ == '__main__':
-    uvicorn.run(app)
 
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)
