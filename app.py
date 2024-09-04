@@ -48,10 +48,10 @@ async def check_forgery(image: UploadFile = File(...)):
 
     # Determine if there is forgery
     if not result['predictions']:
-        return {"response": "No forgery detected"}
+        return {"response": "No forgery detected", "forgery": False}
     else:
         confidence = result['predictions'][0]['confidence']
-        return {"response": "Forgery detected", "confidence": confidence}
+        return {"response": "Forgery detected", "confidence": confidence, "forgery": True}
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
