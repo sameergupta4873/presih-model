@@ -53,6 +53,7 @@ async def check_forgery(image_id: str):
     else:
         confidence = result['predictions'][0]['confidence']
         return {"response": "Forgery detected", "confidence": confidence}
-
-uvicorn.run(app, host="127.0.0.1", port=8000)
+    
+if __name__ == '__main__':
+    uvicorn.run(app)
 
