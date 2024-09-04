@@ -6,6 +6,7 @@ import shutil
 from inference_sdk import InferenceHTTPClient
 import uvicorn
 import os
+import multipart
 
 # Initialize database collections
 # img_collection = stuff.db["images"]  # Update if needed
